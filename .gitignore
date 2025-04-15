@@ -1,0 +1,36 @@
+# Ignore build directories
+/build/
+/out/
+
+# Ignore compiled object files
+*.o
+*.obj
+
+# Ignore compiled binary files
+*.exe
+*.out
+*.app
+
+# Ignore temporary files
+*.tmp
+*.log
+*.bak
+*.swp
+
+# Ignore clang-specific files
+.clangd
+.clang-format
+.clang-tidy
+
+# Ignore dependency files
+*.d
+
+# Ignore version control system files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates

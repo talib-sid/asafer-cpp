@@ -1,0 +1,31 @@
+Done:
+- able to detect variable delcrations
+    - their name, type, loc, etc 
+    additionally, these are also possible (https://clang.llvm.org/doxygen/classclang_1_1VarDecl.html)
+    - custom types also work 
+    - tested with template classes too (multi-type as well) (multi-class as well)
+    - when custom custom, template is DEFINED, not created, this VarDecl is still triggered but the differentiator is 
+    that the varibale name in that case is empty, (SO AST does have a node even for the all custom definitons not only declarations)
+    - at decl level, the templates are given just the name, and a &
+    - at defn and deduction level, things are totally clear.
+
+- detect new keyword
+    - for vanilla 1D Array Alloc (test2.cpp) [dim_size ranged from 5 to 50000000000LL]
+        - we get  Found variable: pchar 
+            Type: char *
+        - 2 unknown allocs (unsigned long long and void *)
+        - always followed with enum of type std::align_val_t
+    - 
+
+- able to ignore comments
+
+
+
+
+Work in Progress:
+
+
+
+To be done:
+- class imports, will render all the elements, the AST analysed is post all-linking that's why.
+
