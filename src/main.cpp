@@ -82,13 +82,13 @@
 //     return Tool.run(newFrontendActionFactory(&finder).get());
 // }
 
+
 #include <clang/Tooling/CommonOptionsParser.h>
 #include <clang/Tooling/Tooling.h>
 #include <clang/Frontend/FrontendActions.h>
 #include <clang/ASTMatchers/ASTMatchers.h>
 #include <clang/ASTMatchers/ASTMatchFinder.h>
 #include <llvm/Support/CommandLine.h>
-
 
 #include "MatchHandlers/NewExprHandler.hpp"
 #include "MemoryTracker/AllocationTable.hpp"
@@ -99,21 +99,60 @@ using namespace clang::ast_matchers;
 
 static llvm::cl::OptionCategory MyToolCategory("memory-analyzer options");
 
+
+
+// debugging
+#include <clang/AST/Decl.h>
+class DebugFunctionHandler : public clang::ast_matchers::MatchFinder::MatchCallback {
+    public:
+        void run(const clang::ast_matchers::MatchFinder::MatchResult &Result) override {
+            if (const auto *FD = Result.Nodes.getNodeAs<clang::FunctionDecl>("anyFunc")) {
+                llvm::outs() << "[MATCH] Function: " << FD->getNameAsString() << "\n";
+            }
+        }
+    };
+
+
+
 int main(int argc, const char **argv) {
-    auto ExpectedParser = CommonOptionsParser::create(argc, argv, MyToolCategory);
-    if (!ExpectedParser) {
-        llvm::errs() << ExpectedParser.takeError();
-        return 1;
-    }
-    CommonOptionsParser &OptionsParser = ExpectedParser.get();
+    //debug 
+    // llvm::outs() << "[Tool] Clang Memory Analyzer started\n";
 
-    ClangTool Tool(OptionsParser.getCompilations(), OptionsParser.getSourcePathList());
+    // auto ExpectedParser = CommonOptionsParser::create(argc, argv, MyToolCategory);
+    // if (!ExpectedParser) {
+    //     llvm::errs() << ExpectedParser.takeError();
+    //     return 1;
+    // }
+    // CommonOptionsParser &OptionsParser = ExpectedParser.get();
+    // ClangTool Tool(OptionsParser.getCompilations(), OptionsParser.getSourcePathList());
 
-    AllocationTable tracker;
-    NewExprHandler newHandler(tracker);
+    // AllocationTable tracker;
+    // NewExprHandler newHandler(tracker);
 
-    MatchFinder finder;
-    finder.addMatcher(cxxNewExpr().bind("newExpr"), &newHandler);
+    // MatchFinder finder;
+    // finder.addMatcher(
+    //     binaryOperator(
+    //         hasOperatorName("="),
+    //         hasRHS(cxxNewExpr().bind("newExpr")),
+    //         hasLHS(declRefExpr(to(varDecl().bind("lhsVar"))))
+    //     ),
+    //     &newHandler
+    // );
 
-    return Tool.run(newFrontendActionFactory(&finder).get());
+    // // debug
+    // for (const auto &path : OptionsParser.getSourcePathList()) {
+    //     llvm::outs() << "[File] Parsing: " << path << "\n";
+    // }
+    // llvm::outs() << "[Tool] Running tool...\n";    
+
+    // return Tool.run(newFrontendActionFactory(&finder).get());
+
+    DebugFunctionHandler debugHandler;
+
+MatchFinder finder;
+finder.addMatcher(
+    functionDecl().bind("anyFunc"),
+    &debugHandler
+);
+
 }

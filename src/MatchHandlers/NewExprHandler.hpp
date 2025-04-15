@@ -3,24 +3,26 @@
 #include <llvm/Support/raw_ostream.h>
 #include "../MemoryTracker/AllocationTable.hpp"
 
-class NewExprHandler : public clang::ast_matchers::MatchFinder::MatchCallback {
+using namespace clang;
+using namespace clang::ast_matchers;
+
+class NewExprHandler : public MatchFinder::MatchCallback {
 public:
     explicit NewExprHandler(AllocationTable &table) : table(table) {}
 
-    void run(const clang::ast_matchers::MatchFinder::MatchResult &Result) override {
-        if (const auto *NewExpr = Result.Nodes.getNodeAs<clang::CXXNewExpr>("newExpr")) {
-            const auto *Parent = Result.Context->getParents(*NewExpr).begin();
-            if (Parent != Result.Context->getParents(*NewExpr).end()) {
-                if (const auto *Assign = Parent->get<clang::BinaryOperator>()) {
-                    if (const auto *LHS = Assign->getLHS()->IgnoreParenImpCasts()) {
-                        if (const auto *DRE = llvm::dyn_cast<clang::DeclRefExpr>(LHS)) {
-                            std::string varName = DRE->getDecl()->getNameAsString();
-                            table.markAllocated(varName, NewExpr->getBeginLoc());
-                            llvm::outs() << "[NEW] Allocated: " << varName << "\n";
-                        }
-                    }
-                }
-            }
+    void run(const MatchFinder::MatchResult &Result) override {
+
+        // debug
+        llvm::outs() << "[Handler] NewExprHandler fired\n";
+
+
+        const auto *NewExpr = Result.Nodes.getNodeAs<CXXNewExpr>("newExpr");
+        const auto *Var = Result.Nodes.getNodeAs<VarDecl>("lhsVar");
+
+        if (NewExpr && Var) {
+            std::string varName = Var->getNameAsString();
+            table.markAllocated(varName, NewExpr->getBeginLoc());
+            llvm::outs() << "[NEW] Allocated: " << varName << "\n";
         }
     }
 

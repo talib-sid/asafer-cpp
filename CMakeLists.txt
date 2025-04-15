@@ -23,8 +23,18 @@ message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 message(STATUS "Using ClangConfig.cmake in: ${Clang_DIR}")
 
 # Include directories
-include_directories(${LLVM_INCLUDE_DIRS})
-include_directories(${CLANG_INCLUDE_DIRS})
+include_directories(
+  ${LLVM_INCLUDE_DIRS}
+  ${CLANG_INCLUDE_DIRS}  
+  
+  ${CMAKE_CURRENT_SOURCE_DIR}/src
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/MatchHandlers
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/MemoryTracker
+
+
+)
+
+
 add_definitions(${LLVM_DEFINITIONS})
 
 # Your executable
