@@ -43,19 +43,19 @@ add_executable(analyzer src/main.cpp)
 
 # Link Clang and LLVM libraries (make sure to match versions)
 target_link_libraries(analyzer
+  # PRIVATE
+  # clangTooling
+  # clangFrontend
+  # clangAST
+  # clangBasic
+  # clangLex
   PRIVATE
-  clangTooling
   clangFrontend
-  clangSerialization
-  clangDriver
-  clangParse
-  clangSema
-  clangAnalysis
+  clangTooling
   clangAST
-  clangASTMatchers
-  clangEdit
   clangLex
   clangBasic
+
 )
 
 

@@ -2,14 +2,16 @@
 #include <clang/Tooling/CommonOptionsParser.h>
 #include <clang/Tooling/Tooling.h>
 #include <clang/Frontend/FrontendActions.h>
-#include <clang/ASTMatchers/ASTMatchers.h>
-#include <clang/ASTMatchers/ASTMatchFinder.h>
+
+// #include <clang/ASTMatchers/ASTMatchers.h>
+// #include <clang/ASTMatchers/ASTMatchFinder.h>
+
 #include <llvm/Support/raw_ostream.h>
 
 
 // My matcher headers (only alloc table in use rn, replacing all traversal logics with custom AST traversals)
-#include "MatchHandlers/NewExprHandler.hpp"
-#include "MatchHandlers/DeleteExprHandler.hpp"
+// #include "MatchHandlers/NewExprHandler.hpp"
+// #include "MatchHandlers/DeleteExprHandler.hpp"
 #include "MemoryTracker/AllocationTable.hpp"
 
 // my AST headers
@@ -19,16 +21,16 @@
 
 using namespace clang;
 using namespace clang::tooling;
-using namespace clang::ast_matchers;
+// using namespace clang::ast_matchers;
 
-class FunctionPrinter : public MatchFinder::MatchCallback {
-public:
-    void run(const MatchFinder::MatchResult &Result) override {
-        if (const FunctionDecl *FD = Result.Nodes.getNodeAs<FunctionDecl>("func")) {
-            llvm::outs() << "Function: " << FD->getNameAsString() << "\n";
-        }
-    }
-};
+// class FunctionPrinter : public MatchFinder::MatchCallback {
+// public:
+//     void run(const MatchFinder::MatchResult &Result) override {
+//         if (const FunctionDecl *FD = Result.Nodes.getNodeAs<FunctionDecl>("func")) {
+//             llvm::outs() << "Function: " << FD->getNameAsString() << "\n";
+//         }
+//     }
+// };
 
 static llvm::cl::OptionCategory ToolCategory("tool options");
 
@@ -108,7 +110,7 @@ basic info abt tf is going on
 
 AllocationTable tracker;	Keeps track of heap-allocated variables
 NewExprHandler newHandler(tracker);	Creates the matcher callback
-finder.addMatcher(...)	Registers two different new patterns
-Tool.run(...)	Starts AST traversal and triggers callbacks
+nder.addMatcher(...)	Registers two different new patterl̥ns
+Tool.run(...)	Starts AST traversal and triggersl̥l̥ callbacks
 
 */
