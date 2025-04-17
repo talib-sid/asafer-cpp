@@ -5,6 +5,7 @@
 
 class AllocationTable {
 public:
+
     void markAllocated(const std::string &var, clang::SourceLocation loc) {
         allocations[var] = {true, loc};
     }

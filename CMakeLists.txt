@@ -31,7 +31,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/src/MatchHandlers
   ${CMAKE_CURRENT_SOURCE_DIR}/src/MemoryTracker
 
-
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/AST
 )
 
 
