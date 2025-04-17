@@ -1,3 +1,4 @@
+// LibTooling Headers
 #include <clang/Tooling/CommonOptionsParser.h>
 #include <clang/Tooling/Tooling.h>
 #include <clang/Frontend/FrontendActions.h>
@@ -5,9 +6,11 @@
 #include <clang/ASTMatchers/ASTMatchFinder.h>
 #include <llvm/Support/raw_ostream.h>
 
+
+// My headers
 #include "MatchHandlers/NewExprHandler.hpp"
 #include "MemoryTracker/AllocationTable.hpp"
-
+#include "MatchHandlers/DeleteExprHandler.hpp"
 
 using namespace clang;
 using namespace clang::tooling;
@@ -25,7 +28,7 @@ public:
 static llvm::cl::OptionCategory ToolCategory("tool options");
 
 int main(int argc, const char **argv) {
-    llvm::outs() << "[Tool] starting\n";
+    llvm::outs() << "[Tool] starting\n\n";
 
     auto ExpectedParser = CommonOptionsParser::create(argc, argv, ToolCategory);
     if (!ExpectedParser) {
@@ -57,11 +60,23 @@ int main(int argc, const char **argv) {
         &newHandler
     );
 
+    DeleteExprHandler deleteHandler(tracker);
+
+    finder.addMatcher(
+        cxxDeleteExpr().bind("deleteExpr"),
+        &deleteHandler
+    );
+
+
 
     return Tool.run(newFrontendActionFactory(&finder).get());
 }
 
+
+
 /*
+basic info abt tf is going on
+
 AllocationTable tracker;	Keeps track of heap-allocated variables
 NewExprHandler newHandler(tracker);	Creates the matcher callback
 finder.addMatcher(...)	Registers two different new patterns

@@ -19,10 +19,10 @@ public:
         const auto *Var = Result.Nodes.getNodeAs<VarDecl>("lhsVar");
 
         if (NewExpr) {
-            llvm::outs() << "[Debug] CXXNewExpr matched\n";
+            // llvm::outs() << "[Debug] CXXNewExpr matched\n";
         }
         if (Var) {
-            llvm::outs() << "[Debug] LHS VarDecl matched: " << Var->getNameAsString() << "\n";
+            // llvm::outs() << "[Debug] LHS VarDecl matched: " << Var->getNameAsString() << "\n";
         }
         
         if (NewExpr && Var) {
