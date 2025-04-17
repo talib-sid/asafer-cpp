@@ -49,3 +49,18 @@ https://stackoverflow.com/questions/60439281/ast-matcher-on-a-specific-node/6044
 
 
 Inbuilt "IgnoreUnlessSpelledInSource" is dialect-depenedent on the C++'s version too.
+
+
+
+newFrontendActionFactory<T>(...) fails with arguments	Write a custom FrontendActionFactory
+No matching constructor	Because Clang expects default constructor
+
+
+linking getting too slow
+```ninja -j 1```
+
+
+ninja -t clean
+rm -rf CMakeFiles CMakeCache.txt
+cmake .. -G Ninja
+ninja > build.log 2>&1
