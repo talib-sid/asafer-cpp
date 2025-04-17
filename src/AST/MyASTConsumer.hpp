@@ -1,9 +1,12 @@
 #pragma once
-#include <clang/AST/ASTConsumer.h>
+// #include <clang/AST/ASTConsumer.h>
 #include "MyASTVisitor.hpp"
 
+
 class MyASTConsumer : public clang::ASTConsumer {
-public:
+
+    virtual void anchor();
+    public:
     MyASTConsumer(clang::ASTContext *Context, AllocationTable &table)
         : Visitor(Context, table) {}
 
@@ -14,4 +17,10 @@ public:
 private:
     MyASTVisitor Visitor;
 };
+
+
+inline void MyASTConsumer::anchor() {}
+
+
+
 

@@ -9,6 +9,7 @@
 #include <llvm/Support/raw_ostream.h>
 
 
+<<<<<<< HEAD
 // My matcher headers (only alloc table in use rn, replacing all traversal logics with custom AST traversals)
 // #include "MatchHandlers/NewExprHandler.hpp"
 // #include "MatchHandlers/DeleteExprHandler.hpp"
@@ -18,6 +19,12 @@
 #include "AST/MyASTConsumer.hpp"
 #include "AST/MyASTVisitor.hpp"
 #include "AST/MyFrontendAction.hpp"
+=======
+// My headers
+#include "MatchHandlers/NewExprHandler.hpp"
+#include "MemoryTracker/AllocationTable.hpp"
+#include "MatchHandlers/DeleteExprHandler.hpp"
+>>>>>>> 8984be5 (Delete expr handled (order-of-visitation issue))
 
 using namespace clang;
 using namespace clang::tooling;
@@ -83,7 +90,11 @@ static llvm::cl::OptionCategory ToolCategory("tool options");
 
 
 int main(int argc, const char **argv) {
+<<<<<<< HEAD
     llvm::outs() << "[Tool] Starting RecursiveASTVisitor Analysis\n";
+=======
+    llvm::outs() << "[Tool] starting\n\n";
+>>>>>>> 8984be5 (Delete expr handled (order-of-visitation issue))
 
     auto ExpectedParser = CommonOptionsParser::create(argc, argv, ToolCategory);
     if (!ExpectedParser) {
@@ -100,7 +111,29 @@ int main(int argc, const char **argv) {
     MyFrontendActionFactory factory(tracker);
     return Tool.run(&factory);    
 
+<<<<<<< HEAD
     // return Tool.run(newFrontendActionFactory<MyFrontendAction>(&tracker).get());    
+=======
+    finder.addMatcher(
+        binaryOperator(
+            hasOperatorName("="),
+            hasRHS(cxxNewExpr().bind("newExpr")),
+            hasLHS(ignoringParenImpCasts(declRefExpr(to(varDecl().bind("lhsVar")))))
+        ),
+        &newHandler
+    );
+
+    DeleteExprHandler deleteHandler(tracker);
+
+    finder.addMatcher(
+        cxxDeleteExpr().bind("deleteExpr"),
+        &deleteHandler
+    );
+
+
+
+    return Tool.run(newFrontendActionFactory(&finder).get());
+>>>>>>> 8984be5 (Delete expr handled (order-of-visitation issue))
 }
 
 

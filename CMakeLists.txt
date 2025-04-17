@@ -55,8 +55,16 @@ target_link_libraries(analyzer
   clangAST
   clangLex
   clangBasic
-
 )
+
+target_sources(analyzer PRIVATE
+  src/main.cpp
+  src/AST/MyFrontendAction.hpp
+  src/AST/MyASTConsumer.hpp
+  src/AST/MyASTVisitor.hpp
+  src/MemoryTracker/AllocationTable.hpp
+)
+
 
 
 # Optional: For debugging build options

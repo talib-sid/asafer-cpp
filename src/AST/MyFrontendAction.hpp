@@ -9,6 +9,7 @@
 
 class MyFrontendAction : public clang::ASTFrontendAction {
 public:
+    virtual void anchor();  // declaration
     MyFrontendAction(AllocationTable &table) : table(table) {}
 
     std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(
@@ -33,3 +34,5 @@ class MyFrontendActionFactory : public clang::tooling::FrontendActionFactory {
         AllocationTable &table;
     };
     
+    
+inline void MyFrontendAction::anchor() {}

@@ -20,12 +20,21 @@
 //         const auto *NewExpr = Result.Nodes.getNodeAs<CXXNewExpr>("newExpr");
 //         const auto *Var = Result.Nodes.getNodeAs<VarDecl>("lhsVar");
 
+<<<<<<< HEAD
 //         if (NewExpr) {
 //             // llvm::outs() << "[Debug] CXXNewExpr matched\n";
 //         }
 //         if (Var) {
 //             llvm::outs() << "[Debug] LHS VarDecl matched: " << Var->getNameAsString() << "\n";
 //         }
+=======
+        if (NewExpr) {
+            // llvm::outs() << "[Debug] CXXNewExpr matched\n";
+        }
+        if (Var) {
+            // llvm::outs() << "[Debug] LHS VarDecl matched: " << Var->getNameAsString() << "\n";
+        }
+>>>>>>> 8984be5 (Delete expr handled (order-of-visitation issue))
         
 //         if (NewExpr && Var) {
 //             std::string varName = Var->getNameAsString();
