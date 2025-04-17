@@ -8,24 +8,32 @@ using namespace clang::ast_matchers;
 
 class NewExprHandler : public MatchFinder::MatchCallback {
 public:
-    explicit NewExprHandler(AllocationTable &table) : table(table) {}
+    explicit NewExprHandler(AllocationTable &tracker) : table(tracker) {}
 
     void run(const MatchFinder::MatchResult &Result) override {
 
-        // debug
-        llvm::outs() << "[Handler] NewExprHandler fired\n";
+        llvm::outs() << "[Handler] NewExprHandler activated\n";
 
 
         const auto *NewExpr = Result.Nodes.getNodeAs<CXXNewExpr>("newExpr");
         const auto *Var = Result.Nodes.getNodeAs<VarDecl>("lhsVar");
 
+        if (NewExpr) {
+            llvm::outs() << "[Debug] CXXNewExpr matched\n";
+        }
+        if (Var) {
+            llvm::outs() << "[Debug] LHS VarDecl matched: " << Var->getNameAsString() << "\n";
+        }
+        
         if (NewExpr && Var) {
             std::string varName = Var->getNameAsString();
             table.markAllocated(varName, NewExpr->getBeginLoc());
-            llvm::outs() << "[NEW] Allocated: " << varName << "\n";
+            llvm::outs() << "[NEW] Heap allocated: " << varName << "\n";
         }
     }
 
 private:
     AllocationTable &table;
 };
+
+
