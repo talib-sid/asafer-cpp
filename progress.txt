@@ -29,3 +29,23 @@ Work in Progress:
 To be done:
 - class imports, will render all the elements, the AST analysed is post all-linking that's why.
 
+
+
+Issues (alot):
+
+Clang matchers is not guaranteeing order,
+might need to implement a custom AST traversal (like RecursiveASTVisitor) for a unfirom fram
+
+(https://clang.llvm.org/docs/LibASTMatchersReference.html#:~:text=Traverse%20Mode,equals(0))))%0A%20%20)%2C%20this)%3B)
+https://stackoverflow.com/questions/78362099/libtooling-ast-matcher-last-unitialized-function-variable
+
+leaves to options for delete:
+- Instead of checking right away, store delete attempts and then process them after all matchers have run (end-of-tool)
+(but will make Control flow detection a bit difficult later but can be faster for small progs)
+
+might have to make something like this, he's doing it for neighbour nodes.
+
+https://stackoverflow.com/questions/60439281/ast-matcher-on-a-specific-node/60448045#60448045
+
+
+Inbuilt "IgnoreUnlessSpelledInSource" is dialect-depenedent on the C++'s version too.
