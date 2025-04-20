@@ -7,6 +7,5 @@ int main() {
 
     delete p;       // Double delete (undefined behavior)
     // delete[] p;   // Not allocated with new[] (undefined behavior)
-
     // delete[] f;   // Not allocated with new[] (undefined behavior)
 }
