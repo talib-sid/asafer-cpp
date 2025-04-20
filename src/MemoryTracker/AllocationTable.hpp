@@ -33,21 +33,23 @@ public:
         deletes.push_back({var, loc});
     }
 
-
     void finalizeDeletes() {
+        llvm::outs() << "\n\033[1m[Summary] Delete Analysis Report\033[0m\n\n";
+    
         for (const auto &d : deletes) {
-            llvm::outs() << "[DELETE] Attempt to delete: " << d.varName << "\n";
-
+            llvm::outs() << "\033[1;36m[DELETE]\033[0m Attempt to delete: \033[1m" << d.varName << "\033[0m\n";
+    
             if (!wasEverAllocated(d.varName)) {
-                llvm::outs() << " Warning: '" << d.varName << "' was not allocated with new!\n";
+                llvm::outs() << "  \033[1;33m⚠️  Warning:\033[0m '" << d.varName << "' was not allocated with new!\n\n";
             } else if (!isCurrentlyAllocated(d.varName)) {
-                llvm::outs() << "Error: Double delete detected for '" << d.varName << "'\n";
+                llvm::outs() << "  \033[1;31m❌ Error:\033[0m Double delete detected for '" << d.varName << "'\n\n";
             } else {
                 markFreed(d.varName);
-                llvm::outs() << "Delete OK: " << d.varName << "\n";
+                llvm::outs() << "  \033[1;32m✅ Delete OK:\033[0m " << d.varName << "\n\n";
             }
         }
     }
+    
 
 private:
     struct AllocationInfo {

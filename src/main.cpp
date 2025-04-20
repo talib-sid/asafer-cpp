@@ -68,10 +68,15 @@ int main(int argc, const char **argv) {
     );
 
 
+    // return Tool.run(newFrontendActionFactory(&finder).get());
+    int result = Tool.run(newFrontendActionFactory(&finder).get());
 
-    return Tool.run(newFrontendActionFactory(&finder).get());
+    
+    // Analyze all deferred delete calls AFTER AST traversal is done
+    tracker.finalizeDeletes();
+    return result;
+
 }
-
 
 
 /*
@@ -81,5 +86,9 @@ AllocationTable tracker;	Keeps track of heap-allocated variables
 NewExprHandler newHandler(tracker);	Creates the matcher callback
 finder.addMatcher(...)	Registers two different new patterns
 Tool.run(...)	Starts AST traversal and triggers callbacks
-
+finder.addMatcher(...)	Registers the delete pattern
+deleteHandler(tracker);	Creates the matcher callback for delete
+finder.addMatcher(...)	Registers the delete pattern
+deleteHandler(tracker);	Creates the matcher callback for delete
+finder.addMatcher(...)	Registers the delete patterns
 */

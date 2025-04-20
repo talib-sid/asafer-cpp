@@ -11,9 +11,7 @@ public:
     explicit NewExprHandler(AllocationTable &tracker) : table(tracker) {}
 
     void run(const MatchFinder::MatchResult &Result) override {
-
         llvm::outs() << "[Handler] NewExprHandler activated\n";
-
 
         const auto *NewExpr = Result.Nodes.getNodeAs<CXXNewExpr>("newExpr");
         const auto *Var = Result.Nodes.getNodeAs<VarDecl>("lhsVar");
