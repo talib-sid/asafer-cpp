@@ -1,0 +1,11 @@
+[Tool] starting
+
+[Handler] NewExprHandler activated
+[NEW] Heap allocated: data
+
+[1m[Summary] Delete Analysis Report[0m
+
+[1;36m[DELETE][0m Attempt to delete: [1mdata[0m
+  [1;33m⚠️  Warning:[0m 'data' was allocated with new[] but deleted with delete
+  [1;32m✅ Delete OK:[0m data
+

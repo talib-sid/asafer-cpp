@@ -1,0 +1,15 @@
+[Tool] starting
+
+[Handler] NewExprHandler activated
+[NEW] Heap allocated: arr
+[Handler] NewExprHandler activated
+[NEW] Heap allocated: buf
+
+[1m[Summary] Delete Analysis Report[0m
+
+[1;36m[DELETE][0m Attempt to delete: [1marr[0m
+  [1;32m✅ Delete OK:[0m arr
+
+[1;36m[DELETE][0m Attempt to delete: [1mbuf[0m
+  [1;32m✅ Delete OK:[0m buf
+

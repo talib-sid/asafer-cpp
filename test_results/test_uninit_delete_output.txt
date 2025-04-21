@@ -1,0 +1,8 @@
+[Tool] starting
+
+
+[1m[Summary] Delete Analysis Report[0m
+
+[1;36m[DELETE][0m Attempt to delete: [1mx[0m
+  [1;33m⚠️  Warning:[0m 'x' was not allocated with new!
+
