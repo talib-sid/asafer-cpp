@@ -38,6 +38,18 @@ int main(int argc, const char **argv) {
 
     CommonOptionsParser &OptionsParser = ExpectedParser.get();
     ClangTool Tool(OptionsParser.getCompilations(), OptionsParser.getSourcePathList());
+    // Disable all Clang's built-in warnings
+    Tool.appendArgumentsAdjuster(
+        [](const std::vector<std::string> &args, llvm::StringRef) {
+            // Disable all built-in warnings
+            std::vector<std::string> adjustedArgs = args;
+            adjustedArgs.push_back("-w");
+            return adjustedArgs;
+        }
+    );
+
+    
+
 
     // FunctionPrinter Printer;
     // Finder.addMatcher(functionDecl().bind("func"), &Printer);

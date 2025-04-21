@@ -16,6 +16,10 @@ public:
         const auto *NewExpr = Result.Nodes.getNodeAs<CXXNewExpr>("newExpr");
         const auto *Var = Result.Nodes.getNodeAs<VarDecl>("lhsVar");
 
+        // 
+        bool isArray = NewExpr->isArray();
+
+
         if (NewExpr) {
             // llvm::outs() << "[Debug] CXXNewExpr matched\n";
         }
@@ -25,10 +29,15 @@ public:
         
         if (NewExpr && Var) {
             std::string varName = Var->getNameAsString();
-            table.markAllocated(varName, NewExpr->getBeginLoc());
+            bool isArray = NewExpr->isArray();
+            table.markAllocated(varName, NewExpr->getBeginLoc(), isArray);
+
             llvm::outs() << "[NEW] Heap allocated: " << varName << "\n";
         }
     }
+
+
+    
 
 private:
     AllocationTable &table;

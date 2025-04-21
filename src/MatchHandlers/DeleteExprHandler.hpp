@@ -30,10 +30,13 @@ public:
                 //     llvm::outs() << "Delete OK: " << varName << "\n";
                 // }
             // }
+
             if (const auto *Ref = dyn_cast<DeclRefExpr>(Arg)) {
                 std::string varName = Ref->getDecl()->getNameAsString();
-                table.recordDeleteAttempt(varName, DelExpr->getBeginLoc());
+                bool isArrayDelete = DelExpr->isArrayForm();  // true for delete[], false for delete
+                table.recordDeleteAttempt(varName, DelExpr->getBeginLoc(), isArrayDelete);
             }
+            
         }
     }
 
