@@ -11,6 +11,7 @@
 #include "MatchHandlers/NewExprHandler.hpp"
 #include "MemoryTracker/AllocationTable.hpp"
 #include "MatchHandlers/DeleteExprHandler.hpp"
+#include "MatchHandlers/SmartPtrHandler.hpp"
 
 
 using namespace clang;
@@ -113,6 +114,16 @@ int main(int argc, const char **argv) {
         ).bind("deleteExpr"),
         &deleteHandler
     );
+
+    SmartPtrHandler spHandler;
+    finder.addMatcher(
+        varDecl(
+        hasInitializer(cxxNewExpr()),
+        hasType(pointerType())
+    ).bind("ptrDecl"),
+    &spHandler
+   );
+
 
 
     // return Tool.run(newFrontendActionFactory(&finder).get());
