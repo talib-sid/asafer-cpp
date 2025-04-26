@@ -4,7 +4,7 @@
 // We expect your tool to report a leak for `p` in leak1() and no
 // leak for `q` in noleak1().
 
-#include <iostream>
+// #include <iostream>
 
 void leak1() {
     int* p = new int;    // LEAK: `p` is allocated but never deleted

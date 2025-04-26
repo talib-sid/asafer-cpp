@@ -4,7 +4,7 @@
 // on one branch of a boolean test.  When the branch does NOT delete,
 // your tool should flag it as a leak.
 
-#include <iostream>
+// #include <iostream>
 
 void maybeFree(bool cond) {
     char* buf = new char[16];  // ALLOC: always new[]
