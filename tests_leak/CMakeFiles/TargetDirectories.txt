@@ -1,0 +1,11 @@
+C:/msys64/home/talib/clang-tool/tests_leak/CMakeFiles/intrinsics_gen.dir
+C:/msys64/home/talib/clang-tool/tests_leak/CMakeFiles/vt_gen.dir
+C:/msys64/home/talib/clang-tool/tests_leak/CMakeFiles/omp_gen.dir
+C:/msys64/home/talib/clang-tool/tests_leak/CMakeFiles/acc_gen.dir
+C:/msys64/home/talib/clang-tool/tests_leak/CMakeFiles/ARMTargetParserTableGen.dir
+C:/msys64/home/talib/clang-tool/tests_leak/CMakeFiles/AArch64TargetParserTableGen.dir
+C:/msys64/home/talib/clang-tool/tests_leak/CMakeFiles/RISCVTargetParserTableGen.dir
+C:/msys64/home/talib/clang-tool/tests_leak/CMakeFiles/clang-tablegen-targets.dir
+C:/msys64/home/talib/clang-tool/tests_leak/CMakeFiles/analyzer.dir
+C:/msys64/home/talib/clang-tool/tests_leak/CMakeFiles/edit_cache.dir
+C:/msys64/home/talib/clang-tool/tests_leak/CMakeFiles/rebuild_cache.dir

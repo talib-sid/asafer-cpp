@@ -12,6 +12,7 @@
 #include "MemoryTracker/AllocationTable.hpp"
 #include "MatchHandlers/DeleteExprHandler.hpp"
 
+
 using namespace clang;
 using namespace clang::tooling;
 using namespace clang::ast_matchers;
@@ -27,6 +28,40 @@ public:
 
 static llvm::cl::OptionCategory ToolCategory("tool options");
 
+
+static llvm::cl::list<std::string>
+    IncludeHeaders("include-headers",
+                   llvm::cl::desc("Only analyze locations whose file path contains one of these substrings (comma separated)"),
+                   llvm::cl::CommaSeparated,
+                   llvm::cl::cat(ToolCategory));
+
+static llvm::cl::list<std::string>
+    ExcludeHeaders("exclude-headers",
+                   llvm::cl::desc("Skip any location whose file path contains one of these substrings"),
+                   llvm::cl::CommaSeparated,
+                   llvm::cl::cat(ToolCategory));
+
+
+bool pathAllows(const clang::SourceManager &SM, clang::SourceLocation Loc) {
+    auto FileName = SM.getFilename(Loc).str();
+  
+    // Exclude wins out first:
+    for (auto &pat : ExcludeHeaders)
+      if (FileName.find(pat) != std::string::npos)
+        return false;
+  
+    // If no includes were specified, allow everything not excluded
+    if (IncludeHeaders.empty())
+      return true;
+  
+    // Otherwise only allow if it matches one of the includes
+    for (auto &pat : IncludeHeaders)
+      if (FileName.find(pat) != std::string::npos)
+        return true;
+  
+    return false;
+  }
+  
 int main(int argc, const char **argv) {
     llvm::outs() << "[Tool] starting\n\n";
 
@@ -48,15 +83,13 @@ int main(int argc, const char **argv) {
         }
     );
 
-    
-
-
     // FunctionPrinter Printer;
     // Finder.addMatcher(functionDecl().bind("func"), &Printer);
 
     AllocationTable tracker;
     NewExprHandler newHandler(tracker);  // <-- this creates the actual handler
     MatchFinder finder;
+    
 
     finder.addMatcher(
         varDecl(hasInitializer(cxxNewExpr().bind("newExpr"))).bind("lhsVar"),
@@ -75,7 +108,9 @@ int main(int argc, const char **argv) {
     DeleteExprHandler deleteHandler(tracker);
 
     finder.addMatcher(
-        cxxDeleteExpr().bind("deleteExpr"),
+        cxxDeleteExpr(
+            unless(isExpansionInSystemHeader())
+        ).bind("deleteExpr"),
         &deleteHandler
     );
 
@@ -86,6 +121,7 @@ int main(int argc, const char **argv) {
     
     // Analyze all deferred delete calls AFTER AST traversal is done
     tracker.finalizeDeletes();
+    tracker.reportLeaks();
     return result;
 
 }

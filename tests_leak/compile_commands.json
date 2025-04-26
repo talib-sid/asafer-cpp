@@ -1,0 +1,8 @@
+[
+{
+  "directory": "C:/msys64/home/talib/clang-tool/tests_leak",
+  "command": "C:\\msys64\\mingw64\\bin\\c++.exe -D_FILE_OFFSET_BITS=\"64 -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS\" -IC:/msys64/home/talib/clang-tool/src -IC:/msys64/home/talib/clang-tool/src/MatchHandlers -IC:/msys64/home/talib/clang-tool/src/MemoryTracker -std=gnu++17 -o CMakeFiles\\analyzer.dir\\src\\main.cpp.obj -c C:\\msys64\\home\\talib\\clang-tool\\src\\main.cpp",
+  "file": "C:\\msys64\\home\\talib\\clang-tool\\src\\main.cpp",
+  "output": "CMakeFiles\\analyzer.dir\\src\\main.cpp.obj"
+}
+]

@@ -15,7 +15,7 @@ public:
         info.location = loc;
         allocations[var] = info;
     }
-
+    
     bool wasEverAllocated(const std::string &var) const {
         return allocations.find(var) != allocations.end();
     }
@@ -56,6 +56,22 @@ public:
             }
         }
     }
+    void reportLeaks() const {
+        llvm::outs() << "\033[1m[Leaks] Unfreed Allocations\033[0m\n\n";
+        for (const auto &pair : allocations) {
+            const auto &var  = pair.first;
+            const auto &info = pair.second;
+            if (info.allocated) {
+                llvm::outs()
+                  << "  \033[1;33m⚠️  Leak:\033[0m '"
+                  << var
+                  << "' allocated here but never deleted\n";
+            }
+        }
+        llvm::outs() << "\n";
+    }
+
+
 
 private:
     struct AllocationInfo {
