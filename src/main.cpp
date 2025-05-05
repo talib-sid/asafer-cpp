@@ -12,6 +12,7 @@
 #include "MemoryTracker/AllocationTable.hpp"
 #include "MatchHandlers/DeleteExprHandler.hpp"
 #include "MatchHandlers/SmartPtrHandler.hpp"
+#include "MatchHandlers/WeakPtrHandler.hpp"
 
 
 using namespace clang;
@@ -123,6 +124,24 @@ int main(int argc, const char **argv) {
     ).bind("ptrDecl"),
     &spHandler
    );
+
+//    SmartPtrHandler upSpHandler;
+//     finder.addMatcher(
+//     varDecl(
+//         hasInitializer(cxxNewExpr()), 
+//         hasType(pointerType())
+//     ).bind("ptrDecl"),
+//     &upSpHandler
+//     );
+
+    WeakPtrHandler weakHandler;
+    finder.addMatcher(
+    fieldDecl(
+        hasType(pointerType())
+    ).bind("fieldPtr"),
+    &weakHandler
+    );
+
 
 
 

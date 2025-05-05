@@ -35,7 +35,7 @@ public:
     }
 
     void finalizeDeletes() {
-        llvm::outs() << "\n\033[1m[Summary] Delete Analysis Report\033[0m\n\n";
+        llvm::outs() << "\n\033[1m[Delete] Analysis Report\033[0m\n\n";
 
         for (const auto &d : deletes) {
             llvm::outs() << "\033[1;36m[DELETE]\033[0m Attempt to delete: \033[1m" << d.varName << "\033[0m\n";
