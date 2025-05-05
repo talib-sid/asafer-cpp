@@ -6,3 +6,6 @@
 [1;36m[DELETE][0m Attempt to delete: [1mx[0m
   [1;33m⚠️  Warning:[0m 'x' was not allocated with new!
 
+[1m[Leaks] Unfreed Allocations[0m
+
+

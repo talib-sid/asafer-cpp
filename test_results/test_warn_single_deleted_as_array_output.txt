@@ -1,11 +1,18 @@
 [Tool] starting
 
-[Handler] NewExprHandler activated
 [NEW] Heap allocated: x
+[1;36m[HINT][0m consider replacing
+    int * x = new int(...);
+  with:
+    auto x = std::make_unique<int>(...);
+
 
 [1m[Summary] Delete Analysis Report[0m
 
 [1;36m[DELETE][0m Attempt to delete: [1mx[0m
   [1;33m⚠️  Warning:[0m 'x' was allocated with new but deleted with delete[]
   [1;32m✅ Delete OK:[0m x
+
+[1m[Leaks] Unfreed Allocations[0m
+
 
