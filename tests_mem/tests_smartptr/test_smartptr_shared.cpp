@@ -3,11 +3,13 @@
 
 // #include <iostream>
 #include <memory>
+using namespace std;
+
 int* gbl = new int(42);     // suggest std::make_shared<int>(42)
 
 void foo() {
     static double* s = new double(3.14);  // suggest static make_shared<double>
-    std::cout << *s << "\n";
+    // std::cout << *s << "\n";
     delete s;
 }
 

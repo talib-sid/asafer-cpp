@@ -92,11 +92,36 @@ int main(int argc, const char **argv) {
     NewExprHandler newHandler(tracker);  // <-- this creates the actual handler
     MatchFinder finder;
     
+    // for local 
+    // finder.addMatcher(
+    //     varDecl(hasInitializer(cxxNewExpr().bind("newExpr"))).bind("lhsVar"),
+    //     &newHandler
+    // );
+    // for namespace‐scope and inline globals
+    // finder.addMatcher(
+    //     varDecl(
+    //     hasGlobalStorage(),                              // global or static storage
+    //     hasInitializer(cxxNewExpr().bind("newExpr"))
+    //     ).bind("lhsVar"),
+    //     &newHandler
+    // );
 
+    // universal matcher
     finder.addMatcher(
-        varDecl(hasInitializer(cxxNewExpr().bind("newExpr"))).bind("lhsVar"),
+        varDecl(
+        //   hasInitializer(hasInicxxNewExpr().bind("newExpr"))
+        hasInitializer(
+            ignoringParenImpCasts(
+              ignoringImplicit(
+                cxxNewExpr().bind("newExpr")
+              )
+            )
+          ),anyOf(isExpansionInMainFile(), hasGlobalStorage())
+        ).bind("lhsVar"),
         &newHandler
-    );
+      );
+      
+  
 
     finder.addMatcher(
         binaryOperator(
@@ -117,13 +142,24 @@ int main(int argc, const char **argv) {
     );
 
     SmartPtrHandler spHandler;
+//     finder.addMatcher(
+//         varDecl(
+//         hasInitializer(cxxNewExpr()),
+//         hasType(pointerType())
+//     ).bind("ptrDecl"),
+//     &spHandler
+//    );
+
     finder.addMatcher(
-        varDecl(
-        hasInitializer(cxxNewExpr()),
-        hasType(pointerType())
+    varDecl(
+      hasGlobalStorage(),
+      hasInitializer(cxxNewExpr()),
+      hasType(pointerType())
     ).bind("ptrDecl"),
     &spHandler
-   );
+  );
+  
+
 
 //    SmartPtrHandler upSpHandler;
 //     finder.addMatcher(
