@@ -1,0 +1,22 @@
+[Tool] starting
+
+[NEW] Heap allocated: a
+[1;36m[HINT][0m consider replacing
+    int * a = new int(...);
+  with:
+    auto a = std::make_unique<int>(...);
+
+
+[1m[Summary] Delete Analysis Report[0m
+
+[1;36m[DELETE][0m Attempt to delete: [1ma[0m
+  [1;33m⚠️  Warning:[0m 'a' was allocated with new[] but deleted with delete
+  [1;32m✅ Delete OK:[0m a
+
+[1;36m[DELETE][0m Attempt to delete: [1ma[0m
+  [1;33m⚠️  Warning:[0m 'a' was allocated with new[] but deleted with delete
+  [1;31m❌ Error:[0m Double delete detected for 'a'
+
+[1m[Leaks] Unfreed Allocations[0m
+
+

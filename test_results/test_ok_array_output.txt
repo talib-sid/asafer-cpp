@@ -1,0 +1,26 @@
+[Tool] starting
+
+[NEW] Heap allocated: arr
+[1;36m[HINT][0m consider replacing
+    int * arr = new int(...);
+  with:
+    auto arr = std::make_unique<int>(...);
+
+[NEW] Heap allocated: buf
+[1;36m[HINT][0m consider replacing
+    char * buf = new char(...);
+  with:
+    auto buf = std::make_unique<char>(...);
+
+
+[1m[Summary] Delete Analysis Report[0m
+
+[1;36m[DELETE][0m Attempt to delete: [1marr[0m
+  [1;32m✅ Delete OK:[0m arr
+
+[1;36m[DELETE][0m Attempt to delete: [1mbuf[0m
+  [1;32m✅ Delete OK:[0m buf
+
+[1m[Leaks] Unfreed Allocations[0m
+
+
