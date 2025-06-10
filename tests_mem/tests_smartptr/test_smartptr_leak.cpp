@@ -5,7 +5,7 @@
 int* leaky = new int;           // HINT + LEAK
 int* fine  = new int(7);
 void good() {
-    delete fine;
+    // delete fine;
 }
 
 int main() {

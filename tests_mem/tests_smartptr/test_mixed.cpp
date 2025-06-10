@@ -6,6 +6,7 @@
 
 int*  a = new int;            // shared_ptr hint
 static double* b = new double; // shared_ptr hint
+// int* x;
 
 void f() {
     char*  c = new char;      // unique_ptr hint

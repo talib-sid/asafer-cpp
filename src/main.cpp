@@ -1,4 +1,4 @@
-// LibTooling Headers
+// === Clang LibTooling and AST Matcher Headers ===
 #include <clang/Tooling/CommonOptionsParser.h>
 #include <clang/Tooling/Tooling.h>
 #include <clang/Frontend/FrontendActions.h>
@@ -6,19 +6,21 @@
 #include <clang/ASTMatchers/ASTMatchFinder.h>
 #include <llvm/Support/raw_ostream.h>
 
-
-// My headers
+// === Custom Match Handlers and Memory Tracker ===
 #include "MatchHandlers/NewExprHandler.hpp"
 #include "MemoryTracker/AllocationTable.hpp"
 #include "MatchHandlers/DeleteExprHandler.hpp"
 #include "MatchHandlers/SmartPtrHandler.hpp"
+#include "MatchHandlers/RecursionHandler.hpp"
 #include "MatchHandlers/WeakPtrHandler.hpp"
+#include "MatchHandlers/DataFlowHandler.hpp" 
 
 
 using namespace clang;
 using namespace clang::tooling;
 using namespace clang::ast_matchers;
 
+// for debugging
 class FunctionPrinter : public MatchFinder::MatchCallback {
 public:
     void run(const MatchFinder::MatchResult &Result) override {
@@ -28,9 +30,10 @@ public:
     }
 };
 
+// === Command-line option category ===
 static llvm::cl::OptionCategory ToolCategory("tool options");
 
-
+// Include/exclude filters for controlling analysis scope via path substrings
 static llvm::cl::list<std::string>
     IncludeHeaders("include-headers",
                    llvm::cl::desc("Only analyze locations whose file path contains one of these substrings (comma separated)"),
@@ -43,30 +46,31 @@ static llvm::cl::list<std::string>
                    llvm::cl::CommaSeparated,
                    llvm::cl::cat(ToolCategory));
 
-
+// File filtering function using include/exclude command-line args
 bool pathAllows(const clang::SourceManager &SM, clang::SourceLocation Loc) {
     auto FileName = SM.getFilename(Loc).str();
-  
-    // Exclude wins out first:
+
+    // Exclude first if matched
     for (auto &pat : ExcludeHeaders)
-      if (FileName.find(pat) != std::string::npos)
-        return false;
-  
-    // If no includes were specified, allow everything not excluded
+        if (FileName.find(pat) != std::string::npos)
+            return false;
+
+    // If no includes specified, accept everything not excluded
     if (IncludeHeaders.empty())
-      return true;
-  
-    // Otherwise only allow if it matches one of the includes
-    for (auto &pat : IncludeHeaders)
-      if (FileName.find(pat) != std::string::npos)
         return true;
-  
+
+    // Otherwise, only accept paths matching one of the include filters
+    for (auto &pat : IncludeHeaders)
+        if (FileName.find(pat) != std::string::npos)
+            return true;
+
     return false;
-  }
-  
+}
+
 int main(int argc, const char **argv) {
     llvm::outs() << "[Tool] starting\n\n";
 
+    // Parse command-line options
     auto ExpectedParser = CommonOptionsParser::create(argc, argv, ToolCategory);
     if (!ExpectedParser) {
         llvm::errs() << ExpectedParser.takeError();
@@ -75,54 +79,44 @@ int main(int argc, const char **argv) {
 
     CommonOptionsParser &OptionsParser = ExpectedParser.get();
     ClangTool Tool(OptionsParser.getCompilations(), OptionsParser.getSourcePathList());
-    // Disable all Clang's built-in warnings
+
+    // Suppress Clang's internal diagnostics
     Tool.appendArgumentsAdjuster(
         [](const std::vector<std::string> &args, llvm::StringRef) {
-            // Disable all built-in warnings
             std::vector<std::string> adjustedArgs = args;
-            adjustedArgs.push_back("-w");
+            adjustedArgs.push_back("-w");  // disable all warnings
             return adjustedArgs;
         }
     );
 
-    // FunctionPrinter Printer;
-    // Finder.addMatcher(functionDecl().bind("func"), &Printer);
-
+    // === Initialize memory tracker and handlers ===
     AllocationTable tracker;
-    NewExprHandler newHandler(tracker);  // <-- this creates the actual handler
-    MatchFinder finder;
-    
-    // for local 
-    // finder.addMatcher(
-    //     varDecl(hasInitializer(cxxNewExpr().bind("newExpr"))).bind("lhsVar"),
-    //     &newHandler
-    // );
-    // for namespace‐scope and inline globals
-    // finder.addMatcher(
-    //     varDecl(
-    //     hasGlobalStorage(),                              // global or static storage
-    //     hasInitializer(cxxNewExpr().bind("newExpr"))
-    //     ).bind("lhsVar"),
-    //     &newHandler
-    // );
+    NewExprHandler newHandler(tracker);
+    DeleteExprHandler deleteHandler(tracker);
+    SmartPtrHandler upSpHandler;
+    WeakPtrHandler weakHandler;
+    RecursionHandler recHandler;
 
-    // universal matcher
+    MatchFinder finder;
+    // std::unique_ptr<CFG> cfg = CFG::buildCFG(FD, FD->getBody(), &Ctx, 
+    //                             CFG::BuildOptions());
+    
+    // === Matcher: new allocations to local/global variables ===
     finder.addMatcher(
         varDecl(
-        //   hasInitializer(hasInicxxNewExpr().bind("newExpr"))
-        hasInitializer(
-            ignoringParenImpCasts(
-              ignoringImplicit(
-                cxxNewExpr().bind("newExpr")
-              )
-            )
-          ),anyOf(isExpansionInMainFile(), hasGlobalStorage())
+            hasInitializer(
+                ignoringParenImpCasts(
+                    ignoringImplicit(
+                        cxxNewExpr().bind("newExpr")
+                    )
+                )
+            ),
+            anyOf(isExpansionInMainFile(), hasGlobalStorage())
         ).bind("lhsVar"),
         &newHandler
-      );
-      
-  
+    );
 
+    // === Matcher: heap allocation via assignment (e.g., p = new T();) ===
     finder.addMatcher(
         binaryOperator(
             hasOperatorName("="),
@@ -132,8 +126,7 @@ int main(int argc, const char **argv) {
         &newHandler
     );
 
-    DeleteExprHandler deleteHandler(tracker);
-
+    // === Matcher: delete/delete[] expressions ===
     finder.addMatcher(
         cxxDeleteExpr(
             unless(isExpansionInSystemHeader())
@@ -141,68 +134,93 @@ int main(int argc, const char **argv) {
         &deleteHandler
     );
 
-    SmartPtrHandler spHandler;
-//     finder.addMatcher(
-//         varDecl(
-//         hasInitializer(cxxNewExpr()),
-//         hasType(pointerType())
-//     ).bind("ptrDecl"),
-//     &spHandler
-//    );
-
+    // === Matcher: suggest replacing raw pointers with smart pointers === 
     finder.addMatcher(
     varDecl(
-      hasGlobalStorage(),
-      hasInitializer(cxxNewExpr()),
-      hasType(pointerType())
+      hasInitializer(
+        ignoringParenImpCasts(
+          // strip away any implicit / parens so we always land on the CXXNewExpr
+          ignoringImplicit(
+            cxxNewExpr().bind("newExpr")
+          )
+        )
+      ),
+      hasType(pointerType()),
+      isExpansionInMainFile()    // optional: skip system headers
     ).bind("ptrDecl"),
-    &spHandler
+    &upSpHandler
   );
-  
 
-
-//    SmartPtrHandler upSpHandler;
-//     finder.addMatcher(
-//     varDecl(
-//         hasInitializer(cxxNewExpr()), 
-//         hasType(pointerType())
-//     ).bind("ptrDecl"),
-//     &upSpHandler
-//     );
-
-    WeakPtrHandler weakHandler;
+    // === Matcher: suggest replacing raw pointer fields with weak_ptr/shared_ptr ===
     finder.addMatcher(
-    fieldDecl(
-        hasType(pointerType())
-    ).bind("fieldPtr"),
-    &weakHandler
+        fieldDecl(
+            hasType(pointerType())
+        ).bind("fieldPtr"),
+        &weakHandler
     );
 
+    // === Matcher: detect direct recursion (function calls itself) ===
+
+    finder.addMatcher(
+      callExpr(unless(isExpansionInSystemHeader())).bind("anyCall"),
+      &recHandler
+    );
+
+    // CFG-based null-deref & uninit tracking
+    // DataFlowHandler dfHandler;
+    // finder.addMatcher(
+    //    functionDecl(isDefinition(), isExpansionInMainFile()).bind("func"),
+    //    &dfHandler
+    //  );
+     // Null-deref detection
+  NullDerefHandler ndHandler;
+  finder.addMatcher(
+    varDecl(hasInitializer(ignoringParenImpCasts(cxxNullPtrLiteralExpr())))
+      .bind("nullVar"),
+    &ndHandler
+  );
+  finder.addMatcher(
+    unaryOperator(hasOperatorName("*"),
+                  hasUnaryOperand(declRefExpr(to(varDecl()))))
+      .bind("derefOp"),
+    &ndHandler
+  );
+
+  // Uninitialized-var detection
+  UninitVarHandler uvHandler;
+  finder.addMatcher(
+    varDecl(hasLocalStorage(), unless(hasInitializer(expr()))).bind("uninitVar"),
+    &uvHandler
+  );
+  finder.addMatcher(
+    declRefExpr(to(varDecl())).bind("useVar"),
+    &uvHandler
+  );
 
 
-
-    // return Tool.run(newFrontendActionFactory(&finder).get());
+    // === Run the tool with all registered matchers ===
+    // runYourAnalysis(FD, std::move(cfg), Ctx);
     int result = Tool.run(newFrontendActionFactory(&finder).get());
 
-    
-    // Analyze all deferred delete calls AFTER AST traversal is done
-    tracker.finalizeDeletes();
-    tracker.reportLeaks();
-    return result;
+    // === Finalize and report analysis ===
+    tracker.finalizeDeletes(); // Validate and report delete correctness
+    tracker.reportLeaks();     // Report memory leaks
 
+    llvm::outs() << "\n\033[1m[Analysis Complete]\033[0m\n";
+    return result;
 }
 
-
 /*
-basic info abt tf is going on
+Structure Overview:
 
-AllocationTable tracker;	Keeps track of heap-allocated variables
-NewExprHandler newHandler(tracker);	Creates the matcher callback
-finder.addMatcher(...)	Registers two different new patterns
-Tool.run(...)	Starts AST traversal and triggers callbacks
-finder.addMatcher(...)	Registers the delete pattern
-deleteHandler(tracker);	Creates the matcher callback for delete
-finder.addMatcher(...)	Registers the delete pattern
-deleteHandler(tracker);	Creates the matcher callback for delete
-finder.addMatcher(...)	Registers the delete patterns
+AllocationTable tracker;               → Tracks heap allocations and deletes
+NewExprHandler newHandler(tracker);    → Handles `new` / `new[]` allocations
+finder.addMatcher(...)                 → Registers AST patterns for heap use
+DeleteExprHandler deleteHandler;       → Tracks delete/delete[] and analyzes mismatches
+SmartPtrHandler                        → Recommends smart pointer replacements
+WeakPtrHandler                         → Flags raw pointer class fields
+RecursionHandler                       → Detects direct recursion
+Tool.run(...)                          → Triggers AST traversal and handler callbacks
+tracker.finalizeDeletes();             → Post-AST cleanup: detect double delete / invalid delete
+tracker.reportLeaks();                 → Emits unfreed memory report
 */

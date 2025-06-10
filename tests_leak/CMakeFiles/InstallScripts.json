@@ -1,7 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"C:/msys64/home/talib/clang-tool/tests_leak/cmake_install.cmake"
-	],
-	"Parallel" : false
-}

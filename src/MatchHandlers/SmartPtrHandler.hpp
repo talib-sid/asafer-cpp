@@ -1,82 +1,104 @@
 #pragma once
+
 #include <clang/ASTMatchers/ASTMatchFinder.h>
+#include <clang/ASTMatchers/ASTMatchers.h>
+#include <clang/ASTMatchers/ASTMatchFinder.h>
+#include <clang/AST/ASTContext.h>
 #include <llvm/Support/raw_ostream.h>
+
 using namespace clang;
 using namespace clang::ast_matchers;
 
+/*
+ * SmartPtrHandler suggests replacing raw `new` allocations with smart pointers
+ * like `std::unique_ptr` or `std::shared_ptr` based on variable scope and usage.
+ */
 class SmartPtrHandler : public MatchFinder::MatchCallback {
 public:
-    void run(const MatchFinder::MatchResult &R) override {
-            // 1) find the VarDecl and NewExpr
-    const auto *VD = R.Nodes.getNodeAs<VarDecl>("ptrDecl");
-    const auto *NE = R.Nodes.getNodeAs<CXXNewExpr>("newExpr");
-    if (!VD || !NE) return;
+    /*
+     * Called when a match is found (a variable initialized using `new`).
+     * Suggests replacing raw pointers with smart pointers.
+     */
 
-    // 2) filter out system headers
-    const auto &SM = R.Context->getSourceManager();
-    if (!SM.isInMainFile(VD->getLocation())) return;
+    void run(const MatchFinder::MatchResult &Result) override {
+        // Get the matched variable declaration and new expression
+        auto *VD = Result.Nodes.getNodeAs<VarDecl>("ptrDecl");
+        auto *NE = Result.Nodes.getNodeAs<CXXNewExpr>("newExpr");
+        if (!VD || !NE) return; // Skip if either is missing
 
-    // 3) figure out the pointee type
-    auto QT = VD->getType()->getPointeeType();
-    if (QT.isNull()) return;
-    std::string Ty = QT.getAsString();
+        // Only run this check in the main file
+        const auto &SM = Result.Context->getSourceManager();
+        if (!SM.isInMainFile(VD->getBeginLoc())) return;
 
-    // 4) decide unique vs shared
-    bool isGlobalOrStatic = VD->hasGlobalStorage() || VD->isStaticLocal();
-    if (isGlobalOrStatic) {
-      llvm::outs()
-        << "\033[1;36m[HINT]\033[0m consider replacing\n    "
-        << VD->getType().getAsString() << " " << VD->getNameAsString()
-        << " = new " << Ty << "(...);\n  with:\n    "
-        << (VD->isStaticLocal() ? "static auto " : "auto ")
-        << VD->getNameAsString()
-        << " = std::make_shared<" << Ty << ">(...);\n"
-        << "  // and for non-owning observers use std::weak_ptr<" << Ty << ">.\n\n";
-    } else {
-      llvm::outs()
-        << "\033[1;36m[HINT]\033[0m consider replacing\n    "
-        << VD->getType().getAsString() << " " << VD->getNameAsString()
-        << " = new " << Ty << "(...);\n  with:\n    "
-        << "auto " << VD->getNameAsString()
-        << " = std::make_unique<" << Ty << ">(...);\n\n";
+        // Extract the pointee type (e.g., T from T* or std::shared_ptr<T>)
+        QualType QT = VD->getType()->getPointeeType();
+        if (QT.isNull()) return;
+
+        std::string Ty = QT.getAsString(); // Type name as string
+
+        // Determine whether the variable is global/static or escapes local scope
+        bool globalOrStatic = VD->hasGlobalStorage() || VD->isStaticLocal();
+        bool escapesLocal   = !globalOrStatic && pointerEscapes(VD, *Result.Context);
+
+        // Emit appropriate suggestion based on ownership pattern
+        if (globalOrStatic || escapesLocal) {
+          
+            // Suggest using shared_ptr (for escaping or static/global variables)
+            llvm::outs()
+              << "\033[1;36m[HINT]\033[0m consider replacing\n    "
+              << VD->getType().getAsString() << " " << VD->getNameAsString()
+              << " = new " << Ty << "(...);\n  with:\n    "
+              << (VD->isStaticLocal() ? "static auto " : "auto ")
+              << VD->getNameAsString()
+              << " = std::make_shared<" << Ty << ">(...);\n"
+              << "  // for non-owning, use std::weak_ptr<" << Ty << ">.\n\n";
+        } else {
+            // Suggest using unique_ptr (for local non-escaping pointers)
+            llvm::outs()
+              << "\033[1;36m[HINT]\033[0m consider replacing\n    "
+              << VD->getType().getAsString() << " " << VD->getNameAsString()
+              << " = new " << Ty << "(...);\n  with:\n    "
+              << "auto " << VD->getNameAsString()
+              << " = std::make_unique<" << Ty << ">(...);\n\n";
+        }
     }
-}
 
-    //     // We bind "ptrDecl" only for VarDecls with new-initializer
-    //     const auto *VD = Result.Nodes.getNodeAs<VarDecl>("ptrDecl");
-    //     if (!VD) return;
+private:
+    /*
+     * Checks whether the pointer escapes the local scope (e.g., by being returned,
+     * passed to another function, or assigned to a field).
+     */
+    bool pointerEscapes(const VarDecl *VD, ASTContext &Ctx) {
+        const FunctionDecl *FD = dyn_cast<FunctionDecl>(VD->getDeclContext());
+        if (!FD || !FD->hasBody()) return false;
 
-    //     // Only in your main file
-    //     const auto &SM = Result.Context->getSourceManager();
-    //     SourceLocation Loc = VD->getBeginLoc();
-    //     if (!SM.isInMainFile(Loc)) return;
+        // Match any use of the variable in a return statement: return ptr;
+        auto refToMe = declRefExpr(to(varDecl(hasName(VD->getNameAsString()))));
 
-    //     QualType QT = VD->getType()->getPointeeType();
-    //     if (QT.isNull()) return;
-    //     std::string Ty = QT.getAsString();
+        auto retMatches = match(
+          returnStmt(hasReturnValue(ignoringParenImpCasts(refToMe))),
+          *FD->getBody(), Ctx
+        );
+        if (!retMatches.empty()) return true;
 
-    //     // Determine storage: global/static vs local
-    //     bool isGlobalOrStatic = VD->hasGlobalStorage() || VD->isStaticLocal();
+        // Match cases like: foo(ptr); → pointer passed as function argument
+        auto callMatches = match(
+          callExpr(hasAnyArgument(ignoringParenImpCasts(refToMe))),
+          *FD->getBody(), Ctx
+        );
+        if (!callMatches.empty()) return true;
 
-    //     if (isGlobalOrStatic) {
-    //         // Suggest shared_ptr
-    //         llvm::outs()
-    //           << "\033[1;36m[HINT]\033[0m consider replacing\n    "
-    //           << VD->getType().getAsString() << " " << VD->getNameAsString()
-    //           << " = new " << Ty << "(...);\n  with:\n    "
-    //           << (VD->isStaticLocal() ? "static auto " : "auto ")
-    //           << VD->getNameAsString()
-    //           << " = std::make_shared<" << Ty << ">(...);\n"
-    //           << "  // and if you need non-owning observers, use std::weak_ptr<"
-    //           << Ty << ">.\n\n";
-    //     } else {
-    //         // Suggest unique_ptr
-    //         llvm::outs()
-    //           << "\033[1;36m[HINT]\033[0m consider replacing\n    "
-    //           << VD->getType().getAsString() << " " << VD->getNameAsString()
-    //           << " = new " << Ty << "(...);\n  with:\n    "
-    //           << "auto " << VD->getNameAsString()
-    //           << " = std::make_unique<" << Ty << ">(...);\n\n";
-    //     }
-    // }
+        // Match assignments like: someField = ptr;
+        auto assignMatches = match(
+          binaryOperator(
+            isAssignmentOperator(),
+            hasRHS(ignoringParenImpCasts(refToMe))
+          ),
+          *FD->getBody(), Ctx
+        );
+        if (!assignMatches.empty()) return true;
+
+        // Otherwise assume it doesn't escape
+        return false;
+    }
 };

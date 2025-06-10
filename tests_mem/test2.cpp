@@ -3,9 +3,9 @@ int main() {
     delete p;       // should be OK (normal delete)
 
     float* f;
-    delete f;       // Not allocated (undefined behavior)
+    delete f;       // Not allocated (ub)
 
-    delete p;       // Double delete (undefined behavior)
-    // delete[] p;   // Not allocated with new[] (undefined behavior)
-    // delete[] f;   // Not allocated with new[] (undefined behavior)
+    delete p;       // again, ub
+    delete[] p;   // Not allocated with new[] (undefined behavior)
+    delete[] f;   // Not allocated with new[] (undefined behavior)
 }
